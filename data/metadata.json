@@ -1,0 +1,119 @@
+{
+  "app": {
+    "title": "Дворовый масштаб",
+    "subtitle": "Васильевский остров · восприятие масштаба и стилистической неоднородности",
+    "version": "1.0.0"
+  },
+  "generated_at": "2026-11-17T12:27:13+00:00",
+  "study_area": {
+    "name": "Васильевский остров, Санкт-Петербург",
+    "bbox_wgs84": [
+      30.1777808,
+      59.9184544,
+      30.3077042,
+      59.9544329
+    ],
+    "origin_wgs84": [
+      30.2427425,
+      59.93644365
+    ],
+    "island_source": "OpenStreetMap relation 1576083 via Nominatim",
+    "island_file": "data/island.geojson",
+    "island_area_km2": 14.037
+  },
+  "method": {
+    "buffer_meters": 100,
+    "grid_step_meters": 50,
+    "height_rule": "height из тега height, иначе building:levels × 3.3",
+    "levels_imputation": "медиана по ячейке 500×500 м (≥8 зданий), иначе медиана по району",
+    "neighbor_rule": "до 5 ближайших зданий в радиусе 100 м; расстояние между полигонами",
+    "level_difference_rule": "max(building:levels соседей) − building:levels здания",
+    "ratio_rule": "height / nearest_distance (для здания); avg_height / min_gap (для двора)",
+    "gap_rule": "минимальный ненулевой зазор между контурами; пары ближе 1.0 м считаются соприкасающимися (стены по меже); min_gap — минимум ближайших положительных зазоров, avg_gap — среднее по зданиям",
+    "style_rule": "год → период из app/config.js; при пересечении границ (1905, 1935) выбирается более поздний период; год вне 1703–2026 → «неизвестно»",
+    "style_diversity_rule": "число различных известных стилей, без «неизвестно»; доля неизвестных показывается отдельно",
+    "dominant_rule": "стиль ≥50% зданий; при равенстве двух стилей доминирующий не определяется",
+    "scenario_plus5_rule": "avg_height + 5 × 3.3 м при неизменном min_gap",
+    "scenario_expand_rule": "avg_height / (min_gap + 10 м)",
+    "reference_points_rule": "сетка 50×50 м внутри полигона острова; точки внутри зданий и точки без валидного зазора исключены"
+  },
+  "thresholds": {
+    "ratioOpenMax": 0.3,
+    "ratioClosedMin": 1.0,
+    "levelContrastMin": 3,
+    "dominantShareMin": 0.5,
+    "unknownStyleWarningShare": 0.5,
+    "specialThreatPeriods": [
+      "От неоклассики к функциональной архитектуре",
+      "Современная архитектура"
+    ],
+    "plusFloorsSearch": 5,
+    "minBuildingsForMetrics": 2
+  },
+  "styles": [
+    "Ранее барокко",
+    "Высокое барокко",
+    "Ранний классицизм",
+    "Строгий классицизм",
+    "Высокий классицизм",
+    "Поздний классицизм (ампир)",
+    "Эклектика (историцизм)",
+    "Модерн",
+    "Неоклассицизм",
+    "Авангард",
+    "От неоклассики к функциональной архитектуре",
+    "Архитектура конца XX – начала XXI века",
+    "Современная архитектура"
+  ],
+  "counts": {
+    "buildings": 3013,
+    "buildings_with_known_year": 2035,
+    "buildings_with_ratio": 1489,
+    "buildings_without_neighbors": 10,
+    "reference_points": 3429,
+    "reference_classes": {
+      "moderate": 612,
+      "open": 213,
+      "closed": 2604
+    },
+    "reference_diversity": {
+      "insufficient": 560,
+      "homogeneous": 1356,
+      "diverse": 1513
+    },
+    "osm_raw_elements": 5200,
+    "osm_unique_buildings": 3013,
+    "kontiki_matched": 1938,
+    "kontiki_candidates": 12975,
+    "kontiki_subset_features": 5088
+  },
+  "year_sources": {
+    "kontiki": 1938,
+    "unknown": 978,
+    "osm": 97
+  },
+  "levels_sources": {
+    "osm": 1794,
+    "imputed_district": 244,
+    "height": 21,
+    "imputed_cell": 954
+  },
+  "osm_base_timestamp": "2026-11-17T12:20:57Z",
+  "licenses": {
+    "osm": {
+      "name": "OpenStreetMap",
+      "license": "ODbL 1.0",
+      "attribution": "© участники OpenStreetMap, ODbL",
+      "url": "https://www.openstreetmap.org/copyright"
+    },
+    "kontikimaps": {
+      "name": "Кон-Тики / how-old-is-this.house",
+      "license": "ODbL 1.0",
+      "attribution": "Данные о годе постройки: Кон-Тики (kontikimaps.ru), ODbL",
+      "url": "https://kontikimaps.ru/how-old/cities250/datasets",
+      "dataset": "HOITH_database_231118.gpkg, версия 18.11.2023",
+      "note": "Перед использованием сверяйтесь с актуальными условиями на сайте. Лицензия ODbL вирусная."
+    }
+  },
+  "disclaimer": "Приложение показывает связь метрик застройки с восприятием масштаба и стилистической неоднородности. Это не оценка качества среды и не прогноз поведения. Выбор участка требует градостроительного обоснования."
+}

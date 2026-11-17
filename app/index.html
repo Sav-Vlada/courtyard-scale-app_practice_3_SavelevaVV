@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Интерактивная оценка восприятия масштаба и стилистической неоднородности дворовой среды Васильевского острова.">
+  <title>Дворовый масштаб · Васильевский остров</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">К содержанию</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">Д</span>
+      <div>
+        <h1>Дворовый масштаб</h1>
+        <p>Васильевский остров · масштаб и стилистическая неоднородность</p>
+      </div>
+    </div>
+    <div class="mode-switch" role="group" aria-label="Режим отображения">
+      <button type="button" class="active" data-mode="baseline">Исходное состояние</button>
+      <button type="button" data-mode="scenario">Сценарий</button>
+      <button type="button" data-mode="delta">Изменение</button>
+    </div>
+    <button type="button" class="ghost-button" id="about-open">О данных</button>
+  </header>
+
+  <div class="research-note">
+    <strong>Научная рамка.</strong>
+    Приложение показывает, как высота, расстояние между зданиями, перепад этажности и стилистическое
+    разнообразие связаны с восприятием масштаба, замкнутости и гетерогенности среды. Это не оценка
+    качества среды и не прогноз поведения жителей.
+  </div>
+
+  <main id="main" class="workspace">
+    <section class="map-panel" aria-labelledby="map-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="map-title">Карта</h2>
+          <p>Кликните в любую точку — двор определяется как область в радиусе 100 м.</p>
+        </div>
+        <div class="toolbar">
+          <label class="switch">
+            <input type="checkbox" id="show-reference" checked>
+            <span>Опорные точки</span>
+          </label>
+          <button type="button" class="small-button" id="fit-island">Весь остров</button>
+        </div>
+      </div>
+      <div class="map-wrap">
+        <div id="map" role="application" aria-label="Интерактивная карта Васильевского острова"></div>
+        <div class="map-status" id="map-status" hidden></div>
+        <div class="map-legend" aria-label="Легенда">
+          <span class="legend-title">ratio здания</span>
+          <span><i style="background:#2f9e6f"></i> &lt; 0.3</span>
+          <span><i style="background:#d99a2b"></i> 0.3–1.0</span>
+          <span><i style="background:#cf4b4b"></i> ≥ 1.0</span>
+          <span><i style="background:#9aa3ad"></i> нет данных</span>
+        </div>
+      </div>
+      <div class="map-caption">
+        <span>Двор определяется как область в радиусе 100 м от точки клика. Учитываются здания, контур
+        которых удалён от точки не более чем на 100 м.</span>
+        <span id="data-freshness"></span>
+      </div>
+    </section>
+
+    <aside class="side-panel" aria-label="Карточка точки и сценарий">
+      <section class="card empty-card" id="empty-card">
+        <div class="empty-illustration" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <h2>Выберите точку на карте</h2>
+        <p>После клика здесь появятся метрики окружающей застройки, класс замкнутости и
+        rule-based интерпретация. Можно нажать на опорную точку или выбрать строку в таблице.</p>
+        <ul class="hint-list">
+          <li><strong>ratio</strong> = avg_height / min_gap</li>
+          <li>Порог открытого двора — ratio &lt; 0.3</li>
+          <li>Порог двора-колодца — ratio ≥ 1.0</li>
+        </ul>
+      </section>
+
+      <section class="card point-card" id="point-card" hidden>
+        <div class="card-kicker" id="point-source">Точка на карте</div>
+        <div class="card-title-row">
+          <div>
+            <h2 id="point-title">Двор</h2>
+            <p class="coords" id="point-coords">—</p>
+          </div>
+          <span class="class-badge" id="point-class-badge">—</span>
+        </div>
+
+        <div class="ratio-meter" aria-hidden="true">
+          <div class="ratio-track">
+            <span class="zone zone-open"></span>
+            <span class="zone zone-moderate"></span>
+            <span class="zone zone-closed"></span>
+            <span class="ratio-marker" id="ratio-marker"></span>
+          </div>
+          <div class="ratio-scale"><span>0</span><span>0.3</span><span>1.0</span><span>2.0+</span></div>
+        </div>
+
+        <div class="metrics-grid" id="point-metrics"></div>
+
+        <div class="interpretation" id="point-interpretation"></div>
+        <div class="inline-error" id="point-errors" hidden></div>
+
+        <details class="formula-box">
+          <summary>Формула и пороги</summary>
+          <div id="point-formula"></div>
+        </details>
+
+        <div class="card-actions">
+          <button type="button" class="primary-button" id="btn-what-if">Что если →</button>
+          <span class="source-note" id="point-source-note"></span>
+        </div>
+      </section>
+
+      <section class="card scenario-card" id="scenario-panel" hidden>
+        <div class="card-kicker">Режим «Что если»</div>
+        <h2>Сценарий параметров</h2>
+        <p class="muted" id="scenario-baseline-line"></p>
+        <div class="scenario-warning" id="scenario-warning" hidden></div>
+
+        <label class="slider-label" for="scenario-height">
+          <span>Высота зданий</span>
+          <output id="scenario-height-value">—</output>
+        </label>
+        <input type="range" id="scenario-height" min="3" max="30" step="0.1" value="5">
+        <div class="range-scale"><span>3 эт.</span><span>30 эт.</span></div>
+
+        <label class="slider-label" for="scenario-gap">
+          <span>Расстояние между зданиями</span>
+          <output id="scenario-gap-value">—</output>
+        </label>
+        <input type="range" id="scenario-gap" min="10" max="80" step="0.1" value="20">
+        <div class="range-scale"><span>10 м</span><span>80 м</span></div>
+
+        <div class="scenario-result" id="scenario-result"></div>
+
+        <figure class="section-figure" aria-labelledby="section-caption">
+          <div id="scenario-section"></div>
+          <figcaption id="section-caption">
+            Разрез «было → стало»: высота и зазор показаны в масштабе. Контуры зданий на карте
+            условны — геометрия не перестраивается.
+          </figcaption>
+        </figure>
+
+        <div class="preset-row" id="preset-row"></div>
+
+        <div class="scenario-actions">
+          <button type="button" class="small-button" id="scenario-reset">Сбросить</button>
+          <div class="save-row">
+            <input type="text" id="scenario-label" maxlength="60" placeholder="Метка сценария" aria-label="Метка сценария">
+            <button type="button" class="primary-button" id="scenario-save">Сохранить</button>
+          </div>
+        </div>
+        <div class="inline-note" id="scenario-save-note" hidden></div>
+      </section>
+
+      <section class="card delta-card" id="delta-panel" hidden>
+        <div class="card-kicker">Режим «Изменение»</div>
+        <h2>Было → стало</h2>
+        <div id="delta-content"></div>
+      </section>
+    </aside>
+  </main>
+
+  <section class="block" aria-labelledby="points-title">
+    <div class="section-head">
+      <div>
+        <h2 id="points-title">Опорные точки</h2>
+        <p>Заранее рассчитанная сетка 50 × 50 м. Нажмите на строку, чтобы открыть точку на карте
+        в режиме «Что если».</p>
+      </div>
+      <div class="block-actions">
+        <span class="table-count" id="table-count"></span>
+        <button type="button" class="small-button" id="export-csv">Экспорт CSV</button>
+      </div>
+    </div>
+
+    <div class="filters" aria-label="Фильтры таблицы">
+      <label>Класс
+        <select id="filter-class">
+          <option value="all">Все</option>
+          <option value="open">Открытый</option>
+          <option value="moderate">Умеренно замкнутый</option>
+          <option value="closed">Замкнутый</option>
+          <option value="no-data">Нет данных</option>
+        </select>
+      </label>
+      <label>ratio от
+        <input type="number" id="filter-ratio-min" step="0.1" min="0" placeholder="0">
+      </label>
+      <label>ratio до
+        <input type="number" id="filter-ratio-max" step="0.1" min="0" placeholder="∞">
+      </label>
+      <label>Перепад этажности ≥
+        <input type="number" id="filter-level-min" step="1" min="0" placeholder="0">
+      </label>
+      <button type="button" class="small-button" id="filters-reset">Сбросить фильтры</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="points-table">
+        <thead>
+          <tr>
+            <th data-sort="id">ID</th>
+            <th>Координаты</th>
+            <th data-sort="avg_height" class="numeric">Ср. высота, м</th>
+            <th data-sort="min_gap" class="numeric">Мин. зазор, м</th>
+            <th data-sort="ratio" class="numeric">ratio</th>
+            <th data-sort="class_id">Класс</th>
+            <th data-sort="level_range" class="numeric">Перепад, эт.</th>
+            <th data-sort="style_diversity" class="numeric">Стилей</th>
+            <th data-sort="dominant_style">Доминирующий стиль</th>
+          </tr>
+        </thead>
+        <tbody id="points-tbody"></tbody>
+      </table>
+    </div>
+    <div class="table-empty" id="table-empty" hidden></div>
+    <nav class="pagination" id="pagination" aria-label="Страницы таблицы"></nav>
+  </section>
+
+  <section class="block" aria-labelledby="find-title">
+    <div class="section-head">
+      <div>
+        <h2 id="find-title">Автоматический поиск</h2>
+        <p>Без ИИ: детерминированные запросы по заранее рассчитанным опорным точкам. Исходные
+        данные не изменяются.</p>
+      </div>
+    </div>
+    <div class="find-buttons" role="group" aria-label="Запросы поиска">
+      <button type="button" data-find="top-ratio">Топ-10 по замкнутости (ratio)</button>
+      <button type="button" data-find="level-range">Перепад этажности ≥ 5</button>
+      <button type="button" data-find="plus5">Где +5 этажей меняет класс</button>
+      <button type="button" data-find="low-diversity">Минимальное разнообразие стилей</button>
+    </div>
+    <div class="find-output" id="find-output">
+      <p class="muted">Выберите запрос — результаты появятся здесь.</p>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="scenarios-title">
+    <div class="section-head">
+      <div>
+        <h2 id="scenarios-title">Сравнение сценариев</h2>
+        <p>Сохранённые сценарии хранятся в браузере. Изменение показано относительно исходного
+        состояния выбранной точки.</p>
+      </div>
+      <div class="block-actions">
+        <button type="button" class="small-button" id="scenarios-clear">Очистить список</button>
+      </div>
+    </div>
+    <div id="scenario-table-wrap">
+      <p class="muted">Пока нет сохранённых сценариев. Откройте точку, перейдите в «Что если»
+      и нажмите «Сохранить».</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div>
+        <h2>Данные</h2>
+        <p>Контуры зданий, этажность и адреса: <a href="https://www.openstreetmap.org/copyright"
+        target="_blank" rel="noopener">© участники OpenStreetMap</a>, ODbL 1.0.</p>
+        <p><strong>Данные о годе постройки: Кон-Тики (kontikimaps.ru), ODbL.</strong>
+        Выгрузка HOITH_database_231118.gpkg, версия 18.11.2023; перед использованием сверяйтесь
+        с <a href="https://kontikimaps.ru/how-old/cities250/datasets" target="_blank" rel="noopener">актуальными
+        условиями</a>. Лицензия ODbL вирусная.</p>
+        <p>Базовые тайлы: © участники OpenStreetMap, ODbL. Библиотеки Leaflet и Turf.js
+        распространяются локально.</p>
+      </div>
+      <div>
+        <h2>Метод</h2>
+        <p>Высота: тег <code>height</code>, иначе <code>building:levels × 3.3</code>. Соседи —
+        до 5 зданий в радиусе 100 м, расстояние между полигонами. Двор — здания в радиусе 100 м
+        от точки. ratio = avg_height / min_gap; стили — по году постройки.</p>
+        <p>Все пороги и периодизация вынесены в <code>app/config.js</code>. Расчёты детерминированы
+        и воспроизводимы.</p>
+      </div>
+      <div>
+        <h2>Ограничения</h2>
+        <p>Приложение показывает связь метрик застройки с восприятием масштаба и стилистической
+        неоднородности. Это не оценка качества среды и не прогноз поведения. Выбор участка требует
+        градостроительного обоснования.</p>
+        <p class="version" id="app-version"></p>
+      </div>
+    </div>
+  </footer>
+
+  <dialog id="about-dialog" aria-labelledby="about-title">
+    <div class="dialog-head">
+      <h2 id="about-title">О данных и методе</h2>
+      <button type="button" class="icon-button" id="about-close" aria-label="Закрыть">×</button>
+    </div>
+    <div class="dialog-body">
+      <h3>Что показывает приложение</h3>
+      <p>Для выбранной точки в радиусе 100 м собираются здания и считаются метрики: средняя,
+      максимальная и минимальная высота, перепад этажности, минимальный и средний зазор,
+      ratio = avg_height / min_gap, число стилей и доминирующий стиль. По ratio определяется
+      класс замкнутости, по перепаду и стилям — дополнительные метки.</p>
+
+      <h3>Классы и пороги</h3>
+      <ul id="about-thresholds"></ul>
+
+      <h3>Источники</h3>
+      <ul>
+        <li>OpenStreetMap: контуры, <code>building:levels</code>, <code>height</code>,
+        <code>addr:street</code>, <code>building:year</code>, <code>start_date</code>.
+        © участники OpenStreetMap, ODbL 1.0.</li>
+        <li>kontikimaps.ru: год постройки при отсутствии в OSM.
+        <strong>© how-old-is-this.house / Кон-Тики, ODbL 1.0.</strong> Перед использованием
+        сверяйтесь с актуальными условиями на сайте.</li>
+        <li>Граница острова: OpenStreetMap relation 1576083 через Nominatim, ODbL.</li>
+        <li>Базовые тайлы: OpenStreetMap, ODbL.</li>
+      </ul>
+
+      <h3>Ограничения метода</h3>
+      <p>Год постройки в OSM и kontikimaps может отсутствовать или быть приблизительным.
+      Стиль — это укрупнённая периодизация, а не атрибуция архитектурного памятника.
+      Зазор между контурами не равен субъективной ширине двора. Приложение не оценивает
+      качество среды, не прогнозирует поведение и не заменяет градостроительное обоснование.</p>
+
+      <h3>Воспроизводимость</h3>
+      <p>Данные готовятся скриптом <code>scripts/prepare_data.py</code>, фронтенд читает готовые
+      GeoJSON и не обращается к Overpass. Пороги и периодизация — в <code>app/config.js</code>.
+      Метрики клика пересчитываются в браузере по тем же правилам, что и предрасчёт.</p>
+
+      <p class="dialog-disclaimer">Приложение показывает связь метрик застройки с восприятием
+      масштаба и стилистической неоднородности. Это не оценка качества среды и не прогноз
+      поведения. Выбор участка требует градостроительного обоснования.</p>
+    </div>
+  </dialog>
+
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="loading-text">Загружаю данные…</p>
+    <p class="loading-sub">Первый запуск может занять несколько секунд: файл зданий весит несколько мегабайт.</p>
+  </div>
+
+  <div class="fatal-error" id="fatal-error" hidden>
+    <div>
+      <h2>Не удалось загрузить приложение</h2>
+      <p id="fatal-message"></p>
+      <p>Запустите сервер из корня проекта и откройте <code>http://localhost:8000/app/</code>:</p>
+      <pre>python -m http.server 8000</pre>
+      <p>Фронтенд не обращается к Overpass; нужны только локальные файлы <code>data/*.geojson</code>
+      и тайлы карты.</p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="vendor/turf/turf.min.js"></script>
+  <script src="js/geo.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
