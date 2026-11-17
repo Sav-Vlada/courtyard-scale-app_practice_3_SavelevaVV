@@ -42,10 +42,47 @@ python -m http.server 8000
 Leaflet и Turf.js лежат локально в `app/vendor/`, поэтому остальная часть приложения работает
 без CDN.
 
+## Публикация на GitHub Pages
+
+В проекте уже есть workflow `.github/workflows/deploy-pages.yml`. При каждом push в `main`
+он собирает статическую версию сайта и публикует её в ветку `gh-pages`. Файл `.nojekyll`
+отключает обработку Jekyll, чтобы GitHub Pages отдавал файлы как есть.
+
+### Первое включение
+
+1. Откройте репозиторий на GitHub: **Settings → Pages**.
+2. В блоке **Build and deployment** выберите:
+   - **Source**: `Deploy from a branch`;
+   - **Branch**: `gh-pages`;
+   - **Folder**: `/ (root)`.
+3. Нажмите **Save**.
+4. Дождитесь завершения workflow во вкладке **Actions** (обычно 1–3 минуты).
+
+Приложение будет доступно по адресу:
+
+**https://sav-vlada.github.io/courtyard-scale-app_practice_3_SavelevaVV/app/**
+
+Важно: нужен путь `/app/` на конце. Корень репозитория не содержит `index.html`.
+
+### Обновление сайта
+
+После первого включения каждый push в `main` автоматически обновляет `gh-pages` и сайт.
+Ручной запуск: **Actions → Deploy static app to GitHub Pages → Run workflow**.
+
+Если workflow не может создать ветку `gh-pages`, проверьте
+**Settings → Actions → General → Workflow permissions** и разрешите
+**Read and write permissions**.
+
+Вместо `gh-pages` можно выбрать публикацию напрямую из ветки `main` и папки `/ (root)`:
+`.nojekyll` уже добавлен, поэтому сайт будет работать и без workflow. Но вариант с `gh-pages`
+удобнее: ветка `main` остаётся чистой, а деплой выполняется отдельным действием.
+
 ## Структура проекта
 
 ```
 courtyard-scale-app/
+├── .github/workflows/deploy-pages.yml  # публикация на GitHub Pages
+├── .nojekyll               # отключает Jekyll на GitHub Pages
 ├── app/
 │   ├── index.html          # разметка интерфейса
 │   ├── styles.css          # оформление и адаптивность
