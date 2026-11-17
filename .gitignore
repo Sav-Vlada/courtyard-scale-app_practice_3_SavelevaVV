@@ -1,0 +1,15 @@
+# Кэш сырых данных и большие выгрузки не коммитятся.
+data/raw/*
+!data/raw/README.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Служебные файлы
+prepare_run.log
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,138 @@
+{
+  "generated_at": "2026-11-17T12:27:13+00:00",
+  "note": "Три контрольных здания для ручной сверки height, level_difference, nearest_distance, ratio",
+  "buildings": [
+    {
+      "id": 506149797,
+      "address": null,
+      "levels": 5.0,
+      "height_m": 16.5,
+      "year": null,
+      "year_source": null,
+      "style": "неизвестно",
+      "neighbors": [
+        {
+          "id": 134281997,
+          "distance": 14.38,
+          "levels": 5.0
+        },
+        {
+          "id": 94851659,
+          "distance": 22.65,
+          "levels": 2.0
+        },
+        {
+          "id": 95418451,
+          "distance": 28.48,
+          "levels": 14.0
+        },
+        {
+          "id": 17558706,
+          "distance": 36.08,
+          "levels": 2.0
+        },
+        {
+          "id": 94851658,
+          "distance": 36.76,
+          "levels": 1.0
+        }
+      ],
+      "level_difference": 11,
+      "nearest_distance_m": 14.38,
+      "ratio": 1.1474,
+      "manual_formula": {
+        "height": "5.0 эт. × 3.3 = 16.5 м",
+        "level_difference": "max(этажи соседей) − 5.0 = 11",
+        "ratio": "16.5 / 14.38 = 1.1474"
+      }
+    },
+    {
+      "id": 277440353,
+      "address": null,
+      "levels": 4.0,
+      "height_m": 13.2,
+      "year": null,
+      "year_source": null,
+      "style": "неизвестно",
+      "neighbors": [
+        {
+          "id": 65623812,
+          "distance": 26.34,
+          "levels": 7.0
+        },
+        {
+          "id": 65623806,
+          "distance": 46.03,
+          "levels": 1.0
+        },
+        {
+          "id": 23009332,
+          "distance": 75.21,
+          "levels": 4.0
+        },
+        {
+          "id": 45966112,
+          "distance": 76.2,
+          "levels": 8.0
+        },
+        {
+          "id": 52650684,
+          "distance": 98.61,
+          "levels": 2.0
+        }
+      ],
+      "level_difference": 4,
+      "nearest_distance_m": 26.34,
+      "ratio": 0.5011,
+      "manual_formula": {
+        "height": "4.0 эт. × 3.3 = 13.2 м",
+        "level_difference": "max(этажи соседей) − 4.0 = 4",
+        "ratio": "13.2 / 26.34 = 0.5011"
+      }
+    },
+    {
+      "id": 112014768,
+      "address": "15-я линия В.О. 14 литТ",
+      "levels": 3.0,
+      "height_m": 9.9,
+      "year": null,
+      "year_source": null,
+      "style": "неизвестно",
+      "neighbors": [
+        {
+          "id": 112014737,
+          "distance": 2.42,
+          "levels": 1.0
+        },
+        {
+          "id": 112014766,
+          "distance": 7.52,
+          "levels": 3.0
+        },
+        {
+          "id": 112014769,
+          "distance": 12.02,
+          "levels": 5.0
+        },
+        {
+          "id": 972784888,
+          "distance": 24.41,
+          "levels": 3.0
+        },
+        {
+          "id": 112014777,
+          "distance": 35.05,
+          "levels": 5.0
+        }
+      ],
+      "level_difference": 5,
+      "nearest_distance_m": 2.42,
+      "ratio": 4.0909,
+      "manual_formula": {
+        "height": "3.0 эт. × 3.3 = 9.9 м",
+        "level_difference": "max(этажи соседей) − 3.0 = 5",
+        "ratio": "9.9 / 2.42 = 4.0909"
+      }
+    }
+  ]
+}
